@@ -25,7 +25,7 @@ def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
     return yoko, tate
 
 
-class Bird:
+class Bird(pg.sprite.Sprite):
     """
     ゲームキャラクター（こうかとん）に関するクラス
     """
@@ -53,9 +53,9 @@ class Bird:
         こうかとん画像Surfaceを生成する
         引数 xy：こうかとん画像の初期位置座標タプル
         """
-        self.img = __class__.imgs[(+5, 0)]
-        self.rct: pg.Rect = self.img.get_rect()
-        self.rct.center = xy
+        self.image = __class__.imgs[(+5, 0)]
+        self.rect: pg.Rect = self.image.get_rect()
+        self.rect.center = xy
 
     def change_img(self, num: int, screen: pg.Surface):
         """
@@ -63,8 +63,8 @@ class Bird:
         引数1 num：こうかとん画像ファイル名の番号
         引数2 screen：画面Surface
         """
-        self.img = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 0.9)
-        screen.blit(self.img, self.rct)
+        self.image = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 0.9)
+        screen.blit(self.image, self.rect)
 
     def update(self, key_lst: list[bool], screen: pg.Surface):
         """
@@ -77,12 +77,12 @@ class Bird:
             if key_lst[k]:
                 sum_mv[0] += mv[0]
                 sum_mv[1] += mv[1]
-        self.rct.move_ip(sum_mv)
-        if check_bound(self.rct) != (True, True):
-            self.rct.move_ip(-sum_mv[0], -sum_mv[1])
+        self.rect.move_ip(sum_mv)
+        if check_bound(self.rect) != (True, True):
+            self.rect.move_ip(-sum_mv[0], -sum_mv[1])
         if not (sum_mv[0] == 0 and sum_mv[1] == 0):
-            self.img = __class__.imgs[tuple(sum_mv)]
-        screen.blit(self.img, self.rct)
+            self.image = __class__.imgs[tuple(sum_mv)]
+        screen.blit(self.image, self.rect)
 
 
 class Beam:
@@ -152,6 +152,24 @@ class Score:  # 現状問題なし
         self.img = self.fonto.render(f"スコア：{self.point}", 0,(0, 0, 255))
         screen.blit(self.img, [100, HEIGHT-50])
 
+class Wall(pg.sprite.Sprite):
+    '''
+    壁を生成するためのクラスの設置位置
+    width: 壁の横幅
+    xy: 壁
+    height: 壁の縦幅
+    '''
+    def __init__(self, xy: tuple[int, int], width: int, height: int):
+        super().__init__()
+        self.image = pg.Surface([width,height])
+        pg.draw.rect(self.image, (255,0,0), (0, 0, width ,height))
+        self.rect = self.image.get_rect()
+        self.rect.center = xy
+
+    def update(self, screen:pg.Surface):
+        screen.blit(self.image, self.rect)
+
+
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))    
@@ -161,6 +179,10 @@ def main():
     beams = []
     # bomb = Bomb((255, 0, 0), 10)
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
+    walls = pg.sprite.Group()
+    walls.add(Wall([100,100]
+                ,30,78))
+    walls.draw(screen)
     score = Score()
     clock = pg.time.Clock()
     tmr = 0
@@ -175,7 +197,7 @@ def main():
         screen.blit(bg_img, [0, 0])
         
         for bomb in bombs:
-            if bird.rct.colliderect(bomb.rct):
+            if bird.rect.colliderect(bomb.rct):
                 # ゲームオーバー時に，こうかとん画像を切り替え，1秒間表示させる
                 bird.change_img(8, screen)
                 fonto = pg.font.Font(None, 80)
@@ -201,6 +223,17 @@ def main():
                 beams[i] = None
                 pg.display.update() 
         beams = [beam for beam in beams if beam  is not None]
+        if len(pg.sprite.spritecollide(bird,walls,False)) !=0:
+                        # ゲームオーバー時に，こうかとん画像を切り替え，1秒間表示させる
+            bird.change_img(8, screen)
+            fonto = pg.font.Font(None, 80)
+            txt = fonto.render("Game Over", True, (255, 0, 0))
+            screen.blit(txt, [WIDTH//2-150, HEIGHT//2])
+            pg.display. update()  
+            time.sleep(5)
+            return
+
+
 
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)  
@@ -209,6 +242,7 @@ def main():
         for bomb in bombs:
             bomb.update(screen)
         score.update(screen)
+        walls.draw(screen)
         pg.display.update()
         tmr += 1
         clock.tick(50)
