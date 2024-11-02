@@ -96,7 +96,7 @@ class Bird(pg.sprite.Sprite):
             # 無敵状態でない場合はライフを減らす
             if not self.invincible:
                 heart.life -= 1
-                heart.display(screen)
+                heart.display()
                 # 無敵状態にする
                 self.invincible = True
                 # 無敵状態の時間を記録
@@ -313,13 +313,22 @@ class Stage:
     def create_stage3(self) -> None:
         # 高難易度のステージ、上級者向け
         inner_walls = [
-
+            ((150,HEIGHT-250), THINKNESS, 200),
+            ((50, HEIGHT-320), 170, THINKNESS),
+            ((220, 50), THINKNESS, 330),
+            ((150,HEIGHT-200),150, THINKNESS),
+            ((300, 250), THINKNESS, 200),
+            ((220,180),430, THINKNESS),
+            ((650,150),100, THINKNESS),
+            ((750, 180), 300, THINKNESS),
+            ((300,250), 650, THINKNESS),
+            ((300,HEIGHT-250), 750, THINKNESS),
         ]
         # 内壁を作成
         for wall in inner_walls:
             self.walls.add(Wall(*wall))
         # ゴールを作成,設置
-        self.goal = Wall((WIDTH - 100, HEIGHT - 100), 80, 10)
+        self.goal = Wall((350, 300), 10, 50)
         self.goal.image.fill((0, 255, 0))
         self.goals.add(self.goal)
     # 次のステージに進めるかどうかを判定しながら，ステージを作成するメソッド
@@ -369,18 +378,15 @@ class HEART:
     # ライフの初期値
     life = 5
 
-    def __init__(self):
+    def __init__(self,screen: pg.Surface):
+        self.screen = screen
         self.font = pg.font.Font(None, 36)
-        self.image = self.font.render("Life: 5", True, (0, 0, 0))
-
-        self.rect = self.image.get_rect()
-
-        self.rect.center = [20, 20]
-    # ライフを更新し，画面に表示するメソッド
-
-    def display(self, screen: pg.Surface):
         life_text = self.font.render(f"Life: {self.life}", True, (0, 0, 0))
-        screen.blit(life_text,  [20, 20])
+        self.screen.blit(life_text,  [20, 20])
+    # ライフを更新し，画面に表示するメソッド
+    def display(self):
+        life_text = self.font.render(f"Life: {self.life}", True, (0, 0, 0))
+        self.screen.blit(life_text,  [20, 20])
 
 
 def main():
@@ -390,7 +396,7 @@ def main():
     bg_img.fill((255, 255, 255))
     bird = Bird((110, HEIGHT-90))
     # HEARTクラスのインスタンス生成
-    heart = HEART()
+    heart = HEART(screen)
     # beam = None
     # beams = []
     # # bomb = Bomb((255, 0, 0), 10)
@@ -403,7 +409,8 @@ def main():
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT:
-                return
+                pg.quit()
+                sys.exit()
 
             # if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
             #     # スペースキー押下でBeamクラスのインスタンス生成
@@ -447,14 +454,19 @@ def main():
                 fonto = pg.font.Font(None, 80)
                 txt = fonto.render("All Stages Clear!", True, (0, 0, 255))
                 screen.blit(txt, [WIDTH//2-150, HEIGHT//2])
+                pg.display.update()
+                # 5秒間表示させる
+                time.sleep(5)
+                return main()
             else:
                 # それ以外はこのステージをクリアしたことを表示
                 fonto = pg.font.Font(None, 80)
                 txt = fonto.render("Stage Clear!", True, (0, 0, 255))
                 screen.blit(txt, [WIDTH//2-150, HEIGHT//2])
-            # 2秒間待機してから次のステージを開始
-            pg.display.update()
-            time.sleep(2)
+                bird.rect.center = (110, HEIGHT-90)
+                # 2秒間表示させる
+                pg.display.update()
+                time.sleep(2)
 
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen, stage.walls, heart)
@@ -466,7 +478,7 @@ def main():
         stage.draw_grid(screen, grid_size=50)
         # score.update(screen)
         # ライフの表示,更新
-        heart.display(screen)
+        heart.display()
 
         # ステージとゴールを描画
         stage.goals.draw(screen)
