@@ -499,6 +499,7 @@ def main():
                 time.sleep(2)
 
         if stage.level==1:
+            screen.blit(center_circle, (WIDTH//2 - 20, HEIGHT//2 - 20))
             if tmr - last_bomb_time >= 20:  # 約1秒ごとに新しい爆弾を生成（元50）
                 if len(bombs) < NUM_OF_BOMBS:
                     bombs.append(Bomb((255, 0, 0), 10))
