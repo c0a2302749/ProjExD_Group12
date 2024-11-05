@@ -2,16 +2,16 @@ import os
 import random
 import sys
 import time
+import math
 import pygame as pg
-
 
 WIDTH = 1100  # ゲームウィンドウの幅
 HEIGHT = 650  # ゲームウィンドウの高さ
 MARGIN = 50  # 壁と画面の間の隙間
 THINKNESS = 5  # 壁の太さ
-NUM_OF_BOMBS = 5
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
+NUM_OF_BOMBS = 17#######ボムの個数
 
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
     """
@@ -25,7 +25,6 @@ def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
     if obj_rct.top < 0 or HEIGHT < obj_rct.bottom:
         tate = False
     return yoko, tate
-
 
 class Bird(pg.sprite.Sprite):
     """
@@ -55,8 +54,8 @@ class Bird(pg.sprite.Sprite):
         こうかとん画像Surfaceを生成する
         引数 xy：こうかとん画像の初期位置座標タプル
         """
-        self.image = __class__.imgs[(+5, 0)]
-        self.rect: pg.Rect = self.image.get_rect()
+        self.image = pg.transform.rotozoom(pg.image.load(f"fig/3.png"), 0, 0.9)
+        self.rect = self.image.get_rect()
         self.rect.center = xy
 
         self.invincible = False
@@ -72,7 +71,24 @@ class Bird(pg.sprite.Sprite):
         self.image = pg.transform.rotozoom(
             pg.image.load(f"fig/{num}.png"), 0, 0.9)
         screen.blit(self.image, self.rect)
-
+    def check_invincible(self,heart):
+        if not self.invincible:
+                heart.life -= 1
+                heart.display()
+                # 無敵状態にする
+                self.invincible = True
+                # 無敵状態の時間を記録
+                self.invincible_timer = pg.time.get_ticks()
+    def check_heart(self,screen,heart):
+            # ライフが0になったらゲームオーバー
+            if heart.life <= 0:
+                fonto = pg.font.Font(None, 80)
+                txt = fonto.render("Game Over", True, (255, 0, 0))
+                screen.blit(txt, [WIDTH//2-150, HEIGHT//2])
+                pg.display.update()
+                time.sleep(5)
+                # ゲームオーバー時にはmain関数を再帰呼び出し(後で変えるかも)
+                return main()
     def update(self, key_lst: list[bool], screen: pg.Surface, walls: pg.sprite.Group,m_walls:pg.sprite.Sprite, heart: int) -> list[int]:
         """
         押下キーに応じてこうかとんを移動させる
@@ -94,22 +110,9 @@ class Bird(pg.sprite.Sprite):
             self.rect.move_ip(-sum_mv[0], -sum_mv[1])
             sum_mv = [0, 0]
             # 無敵状態でない場合はライフを減らす
-            if not self.invincible:
-                heart.life -= 1
-                heart.display()
-                # 無敵状態にする
-                self.invincible = True
-                # 無敵状態の時間を記録
-                self.invincible_timer = pg.time.get_ticks()
-            # ライフが0になったらゲームオーバー
-            if heart.life <= 0:
-                fonto = pg.font.Font(None, 80)
-                txt = fonto.render("Game Over", True, (255, 0, 0))
-                screen.blit(txt, [WIDTH//2-150, HEIGHT//2])
-                pg.display.update()
-                time.sleep(5)
-                # ゲームオーバー時にはmain関数を再帰呼び出し(後で変えるかも)
-                return main()
+            self.check_invincible(heart)
+            self.check_heart(screen,heart)
+
         if check_bound(self.rect) != (True, True):
             self.rect.move_ip(-sum_mv[0], -sum_mv[1])
         if not (sum_mv[0] == 0 and sum_mv[1] == 0):
@@ -154,7 +157,7 @@ class Beam:
     こうかとんが放つビームに関するクラス
     """
 
-    def __init__(self, bird: "Bird"):
+    def __init__(self, bird:  Bird):
         """
         ビーム画像Surfaceを生成する
         引数 bird：ビームを放つこうかとん（Birdインスタンス）
@@ -174,7 +177,6 @@ class Beam:
             self.rct.move_ip(self.vx, self.vy)
             screen.blit(self.img, self.rct)
 
-
 class Bomb:
     """
     爆弾に関するクラス
@@ -190,34 +192,35 @@ class Bomb:
         pg.draw.circle(self.img, color, (rad, rad), rad)
         self.img.set_colorkey((0, 0, 0))
         self.rct = self.img.get_rect()
-        self.rct.center = random.randint(0, WIDTH), random.randint(0, HEIGHT)
-        self.vx, self.vy = +5, +5
+        self.rct.center = WIDTH // 2, HEIGHT // 2  # 画面中央から開始
+        self.speed = 3
+        self.angle = random.uniform(0, 2 * math.pi)  # ランダムな角度
 
     def update(self, screen: pg.Surface):
         """
         爆弾を速度ベクトルself.vx, self.vyに基づき移動させる
         引数 screen：画面Surface
         """
-        yoko, tate = check_bound(self.rct)
-        if not yoko:
-            self.vx *= -1
-        if not tate:
-            self.vy *= -1
-        self.rct.move_ip(self.vx, self.vy)
+        self.rct.centerx += self.speed * math.cos(self.angle)
+        self.rct.centery += self.speed * math.sin(self.angle)
         screen.blit(self.img, self.rct)
 
 
-class Score:  # 現状問題なし
+class Score:
     def __init__(self):
-        self.fonto = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 30)
-        self.img = self.fonto.render("スコア：0", 0, (0, 0, 255))
-        self.rct = self.img.get_rect()
-        self.rct.center = [100, 50]
-        self.point = 0
+        self.font = pg.font.Font(None, 50)
+        self.color = (0, 0, 255)
+        self.score = 0
+        self.image = self.font.render(f"Score: {self.score}", 0, self.color)
+        self.rect = self.image.get_rect()
+        self.rect.center = 100, HEIGHT-50
 
     def update(self, screen: pg.Surface):
         self.img = self.fonto.render(f"スコア：{self.point}", 0, (0, 0, 255))
         screen.blit(self.img, [100, HEIGHT-50])
+    def update(self, screen: pg.Surface):
+        self.image = self.font.render(f"Score: {self.score}", 0, self.color)
+        screen.blit(self.image, self.rect)
 
 
 class Wall(pg.sprite.Sprite):
@@ -282,6 +285,7 @@ class Stage:
 
     def create_stage1(self) -> None:
         # 初心者向けのステージ
+        self.bomb = Bomb((255, 0, 0), 10)
         inner_walls = [
             ((150, 150), THINKNESS, 450),
             ((150, 150), 700, THINKNESS),
@@ -295,6 +299,7 @@ class Stage:
         self.goal = Wall((WIDTH - 250, HEIGHT - 90), 80, 10)
         self.goal.image.fill((0, 255, 0))
         self.goals.add(self.goal)
+        
     # ステージ2の壁とゴールの設定
 
     def create_stage2(self) -> None:
@@ -418,13 +423,19 @@ def main():
     heart = HEART(screen)
     # beam = None
     # beams = []
-    # # bomb = Bomb((255, 0, 0), 10)
-    # bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
+    
+    bombs = []
     # ステージクラスのインスタンス生成
     stage = Stage()
     score = Score()
     clock = pg.time.Clock()
     tmr = 0
+    last_bomb_time = 0
+
+    # 中心点の黒い円を描画するための設定
+    center_circle = pg.Surface((40, 40), pg.SRCALPHA)
+    pg.draw.circle(center_circle, (0, 0, 0), (20, 20), 30)
+
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -487,6 +498,22 @@ def main():
                 pg.display.update()
                 time.sleep(2)
 
+        if stage.level==1:
+            screen.blit(center_circle, (WIDTH//2 - 20, HEIGHT//2 - 20))
+            if tmr - last_bomb_time >= 20:  # 約1秒ごとに新しい爆弾を生成（元50）
+                if len(bombs) < NUM_OF_BOMBS:
+                    bombs.append(Bomb((255, 0, 0), 10))
+                last_bomb_time = tmr
+            for bomb in bombs[:]:
+                bomb.update(screen)
+                if bomb.rct.colliderect(bird.rect):
+                    bombs.remove(bomb)
+                    bird.change_img(8, screen)
+                    bird.check_invincible(heart)
+                    bird.check_heart(screen,heart)
+                if check_bound(bomb.rct) != (True, True):
+                    bombs.remove(bomb)
+
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen, stage.walls,stage.movingWalls, heart)
         # for beam in beams:
@@ -502,13 +529,13 @@ def main():
         # ステージとゴールを描画
         stage.goals.draw(screen)
         
+        
         stage.movingWalls.draw(screen)
         stage.movingWalls.update(screen)
         stage.walls.draw(screen)
         pg.display.update()
         tmr += 1
         clock.tick(50)
-
 
 if __name__ == "__main__":
     pg.init()
