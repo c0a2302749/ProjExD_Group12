@@ -322,10 +322,16 @@ class Stage:
             ((190, 210), 860, THINKNESS),
             ((190, 300), 860, THINKNESS),
         ]
+        moving_walls=[
+            (WIDTH//2,WIDTH-100,HEIGHT-150,THINKNESS,100,2),
+            (300,WIDTH//2-100,HEIGHT-150,THINKNESS,100,0.6),
+            (250,WIDTH-280,HEIGHT-380,THINKNESS,140,4),
+        ]
         # 内壁を作成
         for wall in inner_walls:
             self.walls.add(Wall(*wall))
-        self.movingWalls.add(MovingWall(WIDTH//2,WIDTH-100,HEIGHT-150,THINKNESS,100,2))
+        for m_wall in moving_walls:
+            self.movingWalls.add(MovingWall(*m_wall))
         # ゴールを作成,設置
         self.goal = Wall((WIDTH - 60, 210), 10, 100)
         self.goal.image.fill((0, 255, 0))
@@ -426,7 +432,7 @@ def main():
     
     bombs = []
     # ステージクラスのインスタンス生成
-    stage = Stage()
+    stage = Stage(2)
     score = Score()
     clock = pg.time.Clock()
     tmr = 0
