@@ -41,7 +41,7 @@ class Timer:
         timer_text = f"Time: {minutes:02d}:{seconds:02d}"
         self.img = self.font.render(timer_text, True, (0, 0, 255))
         self.rect = self.img.get_rect()
-        self.rect.center = [100, 50]  # Adjust position as needed
+        self.rect.center = [120, 30]  # Adjust position as needed
         screen.blit(self.img, self.rect)
         
 class Bird(pg.sprite.Sprite):
@@ -224,21 +224,21 @@ class Bomb:
         screen.blit(self.img, self.rct)
 
 
-class Score:
-    def __init__(self):
-        self.font = pg.font.Font(None, 50)
-        self.color = (0, 0, 255)
-        self.score = 0
-        self.image = self.font.render(f"Score: {self.score}", 0, self.color)
-        self.rect = self.image.get_rect()
-        self.rect.center = 100, HEIGHT-50
+# class Score:
+#     def __init__(self):
+#         self.font = pg.font.Font(None, 50)
+#         self.color = (0, 0, 255)
+#         self.score = 0
+#         self.image = self.font.render(f"Score: {self.score}", 0, self.color)
+#         self.rect = self.image.get_rect()
+#         self.rect.center = 100, HEIGHT-50
 
-    def update(self, screen: pg.Surface):
-        self.img = self.fonto.render(f"スコア：{self.point}", 0, (0, 0, 255))
-        screen.blit(self.img, [100, HEIGHT-50])
-    def update(self, screen: pg.Surface):
-        self.image = self.font.render(f"Score: {self.score}", 0, self.color)
-        screen.blit(self.image, self.rect)
+#     def update(self, screen: pg.Surface):
+#         self.img = self.fonto.render(f"スコア：{self.point}", 0, (0, 0, 255))
+#         screen.blit(self.img, [100, HEIGHT-50])
+#     def update(self, screen: pg.Surface):
+#         self.image = self.font.render(f"Score: {self.score}", 0, self.color)
+#         screen.blit(self.image, self.rect)
 
 
 class Wall(pg.sprite.Sprite):
@@ -340,10 +340,17 @@ class Stage:
             ((190, 210), 860, THINKNESS),
             ((190, 300), 860, THINKNESS),
         ]
+        moving_walls=[
+            (WIDTH//2,WIDTH-100,HEIGHT-150,THINKNESS,100,2),
+            (300,WIDTH//2-100,HEIGHT-150,THINKNESS,100,0.6),
+            (250,WIDTH-280,HEIGHT-380,THINKNESS,140,4),
+            (250,WIDTH-280,120,THINKNESS,140,-4),
+        ]
         # 内壁を作成
         for wall in inner_walls:
             self.walls.add(Wall(*wall))
-        self.movingWalls.add(MovingWall(WIDTH//2,WIDTH-100,HEIGHT-150,THINKNESS,100,2))
+        for m_wall in moving_walls:
+            self.movingWalls.add(MovingWall(*m_wall))
         # ゴールを作成,設置
         self.goal = Wall((WIDTH - 60, 210), 10, 100)
         self.goal.image.fill((0, 255, 0))
@@ -422,11 +429,11 @@ class HEART:
         self.screen = screen
         self.font = pg.font.Font(None, 36)
         life_text = self.font.render(f"Life: {self.life}", True, (0, 0, 0))
-        self.screen.blit(life_text,  [20, 20])
+        self.screen.blit(life_text,  [250, 20])
     # ライフを更新し，画面に表示するメソッド
     def display(self):
         life_text = self.font.render(f"Life: {self.life}", True, (0, 0, 0))
-        self.screen.blit(life_text,  [20, 20])
+        self.screen.blit(life_text,  [250, 20])
 
 
 def main():
@@ -444,8 +451,8 @@ def main():
     
     bombs = []
     # ステージクラスのインスタンス生成
-    stage = Stage()
-    score = Score()
+    stage = Stage(3)
+    # score = Score()
     clock = pg.time.Clock()
     tmr = 0
     last_bomb_time = 0
@@ -540,7 +547,7 @@ def main():
         # for bomb in bombs:
         #     bomb.update(screen)
         # 開発時にはGridを表示
-        stage.draw_grid(screen, grid_size=50)
+        # stage.draw_grid(screen, grid_size=50)
         # score.update(screen)
         # ライフの表示,更新
         heart.display()
@@ -557,7 +564,7 @@ def main():
         #     beam.update(screen)
         # for bomb in bombs:
         #     bomb.update(screen)
-        score.update(screen)
+        # score.update(screen)
         
         timer_text = timer.update(screen)  # Update the timer and get the text
 
@@ -567,7 +574,7 @@ def main():
         text_surface = font.render(timer_text, True, (255, 255, 255))
         screen.blit(text_surface, (10, 10))
         pg.display.update()
-        clock.tick(50)
+        # clock.tick(50)
         tmr += 1
         clock.tick(50)
 
