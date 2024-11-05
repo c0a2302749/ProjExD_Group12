@@ -82,14 +82,7 @@ class Bird:
         if not (sum_mv[0] == 0 and sum_mv[1] == 0):
             self.img = __class__.imgs[tuple(sum_mv)]
         screen.blit(self.img, self.rct)
-        # for k, mv in __class__.delta.items():
-        #     if key_lst[k]:
-        #         self.rct.move_ip(mv)
-        # if check_bound(self.rct) != (True, True):
-        #     for k, mv in __class__.delta.items():
-        #         if key_lst[k]:
-        #             self.rct.move_ip(-mv[0], -mv[1])
-        # screen.blit(self.img, self.rct)
+
 
 class Beam:
     """
