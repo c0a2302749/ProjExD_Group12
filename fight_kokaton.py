@@ -73,7 +73,7 @@ class Bird(pg.sprite.Sprite):
             pg.image.load(f"fig/{num}.png"), 0, 0.9)
         screen.blit(self.image, self.rect)
 
-    def update(self, key_lst: list[bool], screen: pg.Surface, walls: pg.sprite.Group, heart: int) -> list[int]:
+    def update(self, key_lst: list[bool], screen: pg.Surface, walls: pg.sprite.Group,m_walls:pg.sprite.Sprite, heart: int) -> list[int]:
         """
         押下キーに応じてこうかとんを移動させる
         引数1 key_lst：押下キーの真理値リスト
@@ -89,7 +89,7 @@ class Bird(pg.sprite.Sprite):
                 sum_mv[1] += mv[1]
         self.rect.move_ip(sum_mv)
         # 壁との衝突判定
-        if pg.sprite.spritecollide(self, walls, False):
+        if pg.sprite.spritecollide(self, walls, False) or pg.sprite.spritecollide(self,m_walls,False):
             # 衝突時には移動を戻す
             self.rect.move_ip(-sum_mv[0], -sum_mv[1])
             sum_mv = [0, 0]
@@ -114,7 +114,6 @@ class Bird(pg.sprite.Sprite):
             self.rect.move_ip(-sum_mv[0], -sum_mv[1])
         if not (sum_mv[0] == 0 and sum_mv[1] == 0):
             self.image = __class__.imgs[tuple(sum_mv)]
-        # 無敵状態の場合は点滅させる
         if self.invincible:
             # 現在の時間を取得
             current_time = pg.time.get_ticks()
@@ -128,12 +127,28 @@ class Bird(pg.sprite.Sprite):
                 else:
                     screen.blit(self.image, self.rect)
         else:
-            # 無敵状態でない場合は通常の画像を表示
-            screen.blit(self.image, self.rect)
-        # 移動量リストを返す
+            screen.blit(self.image,self.rect)
         return sum_mv
+        
 
-
+class MovingWall(pg.sprite.Sprite):
+    def __init__(self, left_limit: int, right_limit: int, y: int, width: int, height: int, sp: int):
+        super().__init__()
+        self.image = pg.Surface((width, height))
+        self.image.fill((255, 0, 0)) # 赤色で塗りつぶす
+        self.rect = self.image.get_rect() # 初期位置を左右の限界値の中央に設定
+        center_x = (left_limit + right_limit - width) // 2
+        self.rect.topleft = (center_x, y)
+        self.sp = sp
+        self.direction = 1
+        self.left_limit = left_limit
+        self.right_limit = right_limit
+    def update(self, screen: pg.Surface): # 壁を左右に移動させる
+            self.rect.x += self.sp * self.direction # 壁の移動範囲を制御する
+            if self.rect.right >= self.right_limit or self.rect.left <= self.left_limit:
+                self.direction *= -1 # 方向を反転させる
+                # 壁を描画する 
+                screen.blit(self.image, self.rect)
 class Beam:
     """
     こうかとんが放つビームに関するクラス
@@ -235,6 +250,7 @@ class Stage:
         self.level = level
         # 壁とゴールのグループを作成
         self.walls = pg.sprite.Group()
+        self.movingWalls = pg.sprite.Group()
         self.goals = pg.sprite.Group()
         # ステージを作成
         self.create_stage()
@@ -304,6 +320,7 @@ class Stage:
         # 内壁を作成
         for wall in inner_walls:
             self.walls.add(Wall(*wall))
+        self.movingWalls.add(MovingWall(WIDTH//2,WIDTH-100,HEIGHT-150,THINKNESS,100,2))
         # ゴールを作成,設置
         self.goal = Wall((WIDTH - 60, 210), 10, 100)
         self.goal.image.fill((0, 255, 0))
@@ -395,6 +412,8 @@ def main():
     bg_img = pg.Surface((WIDTH, HEIGHT))
     bg_img.fill((255, 255, 255))
     bird = Bird((110, HEIGHT-90))
+    # movingwall = MovingWall(400, 100, 20, 80, 3)
+    # movingwall_2 = MovingWall(500, 300, 20, 80, 3)
     # HEARTクラスのインスタンス生成
     heart = HEART(screen)
     # beam = None
@@ -469,7 +488,7 @@ def main():
                 time.sleep(2)
 
         key_lst = pg.key.get_pressed()
-        bird.update(key_lst, screen, stage.walls, heart)
+        bird.update(key_lst, screen, stage.walls,stage.movingWalls, heart)
         # for beam in beams:
         #     beam.update(screen)
         # for bomb in bombs:
@@ -482,6 +501,9 @@ def main():
 
         # ステージとゴールを描画
         stage.goals.draw(screen)
+        
+        stage.movingWalls.draw(screen)
+        stage.movingWalls.update(screen)
         stage.walls.draw(screen)
         pg.display.update()
         tmr += 1
