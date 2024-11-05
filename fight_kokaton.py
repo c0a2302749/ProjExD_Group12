@@ -182,7 +182,7 @@ def main():
     walls = pg.sprite.Group()
     walls.add(Wall([100,100]
                 ,30,78))
-    walls.draw(screen)
+    # walls.draw(screen)
     score = Score()
     clock = pg.time.Clock()
     tmr = 0
