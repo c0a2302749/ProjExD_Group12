@@ -9,9 +9,10 @@ WIDTH = 1100  # ゲームウィンドウの幅
 HEIGHT = 650  # ゲームウィンドウの高さ
 MARGIN = 50  # 壁と画面の間の隙間
 THINKNESS = 5  # 壁の太さ
-NUM_OF_BOMBS = 17#######ボムの個数
+NUM_OF_BOMBS = 17  # ボムの個数
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 
 def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
     """
@@ -32,7 +33,7 @@ class Timer:
         self.font = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 30)
         self.start_time = time.time()
         self.elapsed_time = 0
-        
+
     def update(self, screen: pg.Surface):
         self.elapsed_time = time.time() - self.start_time
         # Convert elapsed time to minutes and seconds (adjust as needed)
@@ -43,7 +44,8 @@ class Timer:
         self.rect = self.img.get_rect()
         self.rect.center = [120, 30]  # Adjust position as needed
         screen.blit(self.img, self.rect)
-        
+
+
 class Bird(pg.sprite.Sprite):
     """
     ゲームキャラクター（こうかとん）に関するクラス
@@ -89,25 +91,28 @@ class Bird(pg.sprite.Sprite):
         self.image = pg.transform.rotozoom(
             pg.image.load(f"fig/{num}.png"), 0, 0.9)
         screen.blit(self.image, self.rect)
-    def check_invincible(self,heart):
+
+    def check_invincible(self, heart):
         if not self.invincible:
-                heart.life -= 1
-                heart.display()
-                # 無敵状態にする
-                self.invincible = True
-                # 無敵状態の時間を記録
-                self.invincible_timer = pg.time.get_ticks()
-    def check_heart(self,screen,heart):
-            # ライフが0になったらゲームオーバー
-            if heart.life <= 0:
-                fonto = pg.font.Font(None, 80)
-                txt = fonto.render("Game Over", True, (255, 0, 0))
-                screen.blit(txt, [WIDTH//2-150, HEIGHT//2])
-                pg.display.update()
-                time.sleep(5)
-                # ゲームオーバー時にはmain関数を再帰呼び出し(後で変えるかも)
-                return main()
-    def update(self, key_lst: list[bool], screen: pg.Surface, walls: pg.sprite.Group,m_walls:pg.sprite.Sprite, heart: int) -> list[int]:
+            heart.life -= 1
+            heart.display()
+            # 無敵状態にする
+            self.invincible = True
+            # 無敵状態の時間を記録
+            self.invincible_timer = pg.time.get_ticks()
+
+    def check_heart(self, screen, heart):
+        # ライフが0になったらゲームオーバー
+        if heart.life <= 0:
+            fonto = pg.font.Font(None, 80)
+            txt = fonto.render("Game Over", True, (255, 0, 0))
+            screen.blit(txt, [WIDTH//2-150, HEIGHT//2])
+            pg.display.update()
+            time.sleep(5)
+            # ゲームオーバー時にはmain関数を再帰呼び出し(後で変えるかも)
+            return main()
+
+    def update(self, key_lst: list[bool], screen: pg.Surface, walls: pg.sprite.Group, m_walls: pg.sprite.Sprite, heart: int) -> list[int]:
         """
         押下キーに応じてこうかとんを移動させる
         引数1 key_lst：押下キーの真理値リスト
@@ -123,13 +128,13 @@ class Bird(pg.sprite.Sprite):
                 sum_mv[1] += mv[1]
         self.rect.move_ip(sum_mv)
         # 壁との衝突判定
-        if pg.sprite.spritecollide(self, walls, False) or pg.sprite.spritecollide(self,m_walls,False):
+        if pg.sprite.spritecollide(self, walls, False) or pg.sprite.spritecollide(self, m_walls, False):
             # 衝突時には移動を戻す
             self.rect.move_ip(-sum_mv[0], -sum_mv[1])
             sum_mv = [0, 0]
             # 無敵状態でない場合はライフを減らす
             self.check_invincible(heart)
-            self.check_heart(screen,heart)
+            self.check_heart(screen, heart)
 
         if check_bound(self.rect) != (True, True):
             self.rect.move_ip(-sum_mv[0], -sum_mv[1])
@@ -148,28 +153,31 @@ class Bird(pg.sprite.Sprite):
                 else:
                     screen.blit(self.image, self.rect)
         else:
-            screen.blit(self.image,self.rect)
+            screen.blit(self.image, self.rect)
         return sum_mv
-        
+
 
 class MovingWall(pg.sprite.Sprite):
     def __init__(self, left_limit: int, right_limit: int, y: int, width: int, height: int, sp: int):
         super().__init__()
         self.image = pg.Surface((width, height))
-        self.image.fill((255, 0, 0)) # 赤色で塗りつぶす
-        self.rect = self.image.get_rect() # 初期位置を左右の限界値の中央に設定
+        self.image.fill((255, 0, 0))  # 赤色で塗りつぶす
+        self.rect = self.image.get_rect()  # 初期位置を左右の限界値の中央に設定
         center_x = (left_limit + right_limit - width) // 2
         self.rect.topleft = (center_x, y)
         self.sp = sp
         self.direction = 1
         self.left_limit = left_limit
         self.right_limit = right_limit
-    def update(self, screen: pg.Surface): # 壁を左右に移動させる
-            self.rect.x += self.sp * self.direction # 壁の移動範囲を制御する
-            if self.rect.right >= self.right_limit or self.rect.left <= self.left_limit:
-                self.direction *= -1 # 方向を反転させる
-                # 壁を描画する 
-                screen.blit(self.image, self.rect)
+
+    def update(self, screen: pg.Surface):  # 壁を左右に移動させる
+        self.rect.x += self.sp * self.direction  # 壁の移動範囲を制御する
+        if self.rect.right >= self.right_limit or self.rect.left <= self.left_limit:
+            self.direction *= -1  # 方向を反転させる
+            # 壁を描画する
+            screen.blit(self.image, self.rect)
+
+
 class Beam:
     """
     こうかとんが放つビームに関するクラス
@@ -195,12 +203,13 @@ class Beam:
             self.rct.move_ip(self.vx, self.vy)
             screen.blit(self.img, self.rct)
 
+
 class Bomb:
     """
     爆弾に関するクラス
     """
 
-    def __init__(self, color: tuple[int, int, int], rad: int):
+    def __init__(self, color: tuple[int, int, int], rad: int, xy: tuple[int, int]):
         """
         引数に基づき爆弾円Surfaceを生成する
         引数1 color：爆弾円の色タプル
@@ -210,7 +219,7 @@ class Bomb:
         pg.draw.circle(self.img, color, (rad, rad), rad)
         self.img.set_colorkey((0, 0, 0))
         self.rct = self.img.get_rect()
-        self.rct.center = WIDTH // 2, HEIGHT // 2  # 画面中央から開始
+        self.rct.center = xy  # 画面中央から開始
         self.speed = 3
         self.angle = random.uniform(0, 2 * math.pi)  # ランダムな角度
 
@@ -280,6 +289,7 @@ class Stage:
     def create_stage(self) -> None:
         # 壁とゴールを初期化
         self.walls.empty()
+        self.movingWalls.empty()
         self.goals.empty()
         # 外壁の設定(ステージ共通)
         outer_walls = [
@@ -303,7 +313,6 @@ class Stage:
 
     def create_stage1(self) -> None:
         # 初心者向けのステージ
-        self.bomb = Bomb((255, 0, 0), 10)
         inner_walls = [
             ((150, 150), THINKNESS, 450),
             ((150, 150), 700, THINKNESS),
@@ -317,7 +326,7 @@ class Stage:
         self.goal = Wall((WIDTH - 250, HEIGHT - 90), 80, 10)
         self.goal.image.fill((0, 255, 0))
         self.goals.add(self.goal)
-        
+
     # ステージ2の壁とゴールの設定
 
     def create_stage2(self) -> None:
@@ -340,15 +349,17 @@ class Stage:
             ((190, 210), 860, THINKNESS),
             ((190, 300), 860, THINKNESS),
         ]
-        moving_walls=[
-            (WIDTH//2,WIDTH-100,HEIGHT-150,THINKNESS,100,2),
-            (300,WIDTH//2-100,HEIGHT-150,THINKNESS,100,0.6),
-            (250,WIDTH-280,HEIGHT-380,THINKNESS,140,4),
-            (250,WIDTH-280,120,THINKNESS,140,-4),
+        # 動く壁の設定
+        moving_walls = [
+            (WIDTH//2, WIDTH-100, HEIGHT-150, THINKNESS, 100, 2),
+            (300, WIDTH//2-100, HEIGHT-150, THINKNESS, 100, 0.6),
+            (250, WIDTH-280, HEIGHT-380, THINKNESS, 140, 4),
+            (250, WIDTH-280, 120, THINKNESS, 140, -4),
         ]
         # 内壁を作成
         for wall in inner_walls:
             self.walls.add(Wall(*wall))
+        # 動く壁を作成
         for m_wall in moving_walls:
             self.movingWalls.add(MovingWall(*m_wall))
         # ゴールを作成,設置
@@ -360,20 +371,25 @@ class Stage:
     def create_stage3(self) -> None:
         # 高難易度のステージ、上級者向け
         inner_walls = [
-            ((150,HEIGHT-250), THINKNESS, 200),
+            ((150, HEIGHT-250), THINKNESS, 200),
             ((50, HEIGHT-320), 170, THINKNESS),
             ((220, 50), THINKNESS, 330),
-            ((150,HEIGHT-200),150, THINKNESS),
+            ((150, HEIGHT-200), 150, THINKNESS),
             ((300, 250), THINKNESS, 200),
-            ((220,180),430, THINKNESS),
-            ((650,150),100, THINKNESS),
+            ((220, 180), 430, THINKNESS),
+            ((650, 150), 100, THINKNESS),
             ((750, 180), 300, THINKNESS),
-            ((300,250), 650, THINKNESS),
-            ((300,HEIGHT-250), 750, THINKNESS),
+            ((300, 250), 650, THINKNESS),
+            ((300, HEIGHT-250), 750, THINKNESS),
+        ]
+        moving_walls = [
+            (400, WIDTH-100, 200, THINKNESS, 100, 2),
         ]
         # 内壁を作成
         for wall in inner_walls:
             self.walls.add(Wall(*wall))
+        for m_wall in moving_walls:
+            self.movingWalls.add(MovingWall(*m_wall))
         # ゴールを作成,設置
         self.goal = Wall((350, 300), 10, 50)
         self.goal.image.fill((0, 255, 0))
@@ -393,7 +409,7 @@ class Stage:
         return True
     # gridを描画するメソッド
 
-    def draw_grid(self, screen: pg.Surface, grid_size: int)-> None:
+    def draw_grid(self, screen: pg.Surface, grid_size: int) -> None:
         """
         ステージを作成するときの目安になるGridを描画するメソッド
         引数 screen: 描画対象のSurface
@@ -410,7 +426,7 @@ class Stage:
                          (WIDTH - MARGIN, y), 1)
     # ステージを描画するメソッド
 
-    def update(self, screen: pg.Surface)-> None:
+    def update(self, screen: pg.Surface) -> None:
         for wall in self.walls:
             if isinstance(wall, MovingWall):
                 wall.update()
@@ -425,12 +441,13 @@ class HEART:
     # ライフの初期値
     life = 5
 
-    def __init__(self,screen: pg.Surface):
+    def __init__(self, screen: pg.Surface):
         self.screen = screen
         self.font = pg.font.Font(None, 36)
         life_text = self.font.render(f"Life: {self.life}", True, (0, 0, 0))
         self.screen.blit(life_text,  [250, 20])
     # ライフを更新し，画面に表示するメソッド
+
     def display(self):
         life_text = self.font.render(f"Life: {self.life}", True, (0, 0, 0))
         self.screen.blit(life_text,  [250, 20])
@@ -448,10 +465,10 @@ def main():
     heart = HEART(screen)
     # beam = None
     # beams = []
-    
+
     bombs = []
     # ステージクラスのインスタンス生成
-    stage = Stage(2)
+    stage = Stage(1)
     # score = Score()
     clock = pg.time.Clock()
     tmr = 0
@@ -524,24 +541,29 @@ def main():
                 pg.display.update()
                 time.sleep(2)
 
-        if stage.level==1:
+        if stage.level == 1:
             screen.blit(center_circle, (WIDTH//2 - 20, HEIGHT//2 - 20))
             if tmr - last_bomb_time >= 20:  # 約1秒ごとに新しい爆弾を生成（元50）
                 if len(bombs) < NUM_OF_BOMBS:
-                    bombs.append(Bomb((255, 0, 0), 10))
+                    bombs.append(Bomb((255, 0, 0), 10, (WIDTH//2, HEIGHT//2)))
                 last_bomb_time = tmr
-            for bomb in bombs[:]:
-                bomb.update(screen)
-                if bomb.rct.colliderect(bird.rect):
-                    bombs.remove(bomb)
-                    bird.change_img(8, screen)
-                    bird.check_invincible(heart)
-                    bird.check_heart(screen,heart)
-                if check_bound(bomb.rct) != (True, True):
-                    bombs.remove(bomb)
-
+        elif stage.level == 3:
+            screen.blit(center_circle, (WIDTH//2-20, HEIGHT - 170))
+            if tmr - last_bomb_time >= 20:
+                if len(bombs) < NUM_OF_BOMBS:
+                    bombs.append(Bomb((255, 0, 0), 10, (WIDTH//2, HEIGHT-150)))
+                last_bomb_time = tmr
+        for bomb in bombs[:]:
+            bomb.update(screen)
+            if bomb.rct.colliderect(bird.rect):
+                bombs.remove(bomb)
+                bird.change_img(8, screen)
+                bird.check_invincible(heart)
+                bird.check_heart(screen, heart)
+            if check_bound(bomb.rct) != (True, True):
+                bombs.remove(bomb)
         key_lst = pg.key.get_pressed()
-        bird.update(key_lst, screen, stage.walls,stage.movingWalls, heart)
+        bird.update(key_lst, screen, stage.walls, stage.movingWalls, heart)
         # for beam in beams:
         #     beam.update(screen)
         # for bomb in bombs:
@@ -554,18 +576,17 @@ def main():
 
         # ステージとゴールを描画
         stage.goals.draw(screen)
-        
-        
+
         stage.movingWalls.draw(screen)
         stage.movingWalls.update(screen)
         stage.walls.draw(screen)
-        # bird.update(key_lst, screen,walls,m_walls,heart)  
+        # bird.update(key_lst, screen,walls,m_walls,heart)
         # for beam in beams :
         #     beam.update(screen)
         # for bomb in bombs:
         #     bomb.update(screen)
         # score.update(screen)
-        
+
         timer_text = timer.update(screen)  # Update the timer and get the text
 
         # Display the timer text separately to ensure it's always visible
@@ -577,6 +598,7 @@ def main():
         # clock.tick(50)
         tmr += 1
         clock.tick(50)
+
 
 if __name__ == "__main__":
     pg.init()
