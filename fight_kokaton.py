@@ -84,7 +84,32 @@ class Bird:
             self.img = __class__.imgs[tuple(sum_mv)]
         screen.blit(self.img, self.rct)
 
+class MovingWall:
+    def __init__(self, x, y, width, height, sp):
+        self.x = x
+        self.y = y
+        self.width = width
+        # self.img = pg.Surface((width, height))  # 壁の生成
+        # pg.draw.rect(self.img, (255, 0, 0), (0, HEIGHT/2, 100, HEIGHT))
+        self.rect=pg.Rect(x, y, width, height)
+        self.surface=pg.Surface((width, height))
+        self.rct=self.surface.get_rect()
+        self.sp = sp
+        self.direction = 1  # 方向の設定 
 
+    def update(self, screen:pg.Surface):
+        # 壁を左右に移動させる
+        # self.rct.move_ip(self.x, self.y)
+
+        # 壁の移動範囲を制御する
+        self.rect.x += self.sp * self.direction
+
+        # if self.width >= WIDTH or self.x <= 0:
+        #     self.direction *= -1  # 方向を反転させる
+        if self.rect.right >= WIDTH*2/3 or self.rect.left <= WIDTH/3:
+            self.direction *= -1  # 方向を反転させる
+        # 壁を描画する
+        screen.blit(self.surface, (self.rect.x, self.rect.y))
 class Beam:
     """
     こうかとんが放つビームに関するクラス
@@ -157,6 +182,8 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))    
     bg_img = pg.image.load("fig/pg_bg.jpg")
     bird = Bird((300, 200))
+    movingwall = MovingWall(400, 100, 20, 80, 3)
+    movingwall_2 = MovingWall(500, 300, 20, 80, 3)
     beam = None
     beams = []
     # bomb = Bomb((255, 0, 0), 10)
@@ -208,6 +235,8 @@ def main():
             beam.update(screen)
         for bomb in bombs:
             bomb.update(screen)
+        movingwall.update(screen)
+        movingwall_2.update(screen)
         score.update(screen)
         pg.display.update()
         tmr += 1
