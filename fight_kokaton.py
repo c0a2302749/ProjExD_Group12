@@ -451,7 +451,7 @@ def main():
     
     bombs = []
     # ステージクラスのインスタンス生成
-    stage = Stage(3)
+    stage = Stage(2)
     # score = Score()
     clock = pg.time.Clock()
     tmr = 0
