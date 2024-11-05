@@ -26,6 +26,24 @@ def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
         tate = False
     return yoko, tate
 
+
+class Timer:
+    def __init__(self):
+        self.font = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 30)
+        self.start_time = time.time()
+        self.elapsed_time = 0
+        
+    def update(self, screen: pg.Surface):
+        self.elapsed_time = time.time() - self.start_time
+        # Convert elapsed time to minutes and seconds (adjust as needed)
+        minutes = int(self.elapsed_time // 60)
+        seconds = int(self.elapsed_time % 60)
+        timer_text = f"Time: {minutes:02d}:{seconds:02d}"
+        self.img = self.font.render(timer_text, True, (0, 0, 255))
+        self.rect = self.img.get_rect()
+        self.rect.center = [100, 50]  # Adjust position as needed
+        screen.blit(self.img, self.rect)
+        
 class Bird(pg.sprite.Sprite):
     """
     ゲームキャラクター（こうかとん）に関するクラス
@@ -436,6 +454,7 @@ def main():
     center_circle = pg.Surface((40, 40), pg.SRCALPHA)
     pg.draw.circle(center_circle, (0, 0, 0), (20, 20), 30)
 
+    timer = Timer()
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -533,7 +552,22 @@ def main():
         stage.movingWalls.draw(screen)
         stage.movingWalls.update(screen)
         stage.walls.draw(screen)
+        # bird.update(key_lst, screen,walls,m_walls,heart)  
+        # for beam in beams :
+        #     beam.update(screen)
+        # for bomb in bombs:
+        #     bomb.update(screen)
+        score.update(screen)
+        
+        timer_text = timer.update(screen)  # Update the timer and get the text
+
+        # Display the timer text separately to ensure it's always visible
+        # You can customize the position and style as needed
+        font = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 30)
+        text_surface = font.render(timer_text, True, (255, 255, 255))
+        screen.blit(text_surface, (10, 10))
         pg.display.update()
+        clock.tick(50)
         tmr += 1
         clock.tick(50)
 
