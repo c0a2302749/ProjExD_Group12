@@ -1,5 +1,5 @@
 # イライラ棒 feat こうかとん
-
+![alt text](fig/screen_shot.png.png)
 ## 実行環境の必要条件
 
 - python >= 3.10
