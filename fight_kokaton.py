@@ -91,15 +91,17 @@ class Bird(pg.sprite.Sprite):
         self.image = pg.transform.rotozoom(
             pg.image.load(f"fig/{num}.png"), 0, 0.9)
         screen.blit(self.image, self.rect)
-
+    # 無敵じゃなかったらライフを減らす
     def check_invincible(self, heart):
         if not self.invincible:
             heart.life -= 1
             heart.display()
-            # 無敵状態にする
-            self.invincible = True
-            # 無敵状態の時間を記録
-            self.invincible_timer = pg.time.get_ticks()
+            self.effect_invincible()
+    # 無敵状態にする
+    def effect_invincible(self):
+        self.invincible = True
+        self.invincible_timer = pg.time.get_ticks()
+
 
     def check_heart(self, screen, heart):
         # ライフが0になったらゲームオーバー
@@ -108,7 +110,7 @@ class Bird(pg.sprite.Sprite):
             txt = fonto.render("Game Over", True, (255, 0, 0))
             screen.blit(txt, [WIDTH//2-150, HEIGHT//2])
             pg.display.update()
-            time.sleep(5)
+            time.sleep(3)
             # ゲームオーバー時にはmain関数を再帰呼び出し(後で変えるかも)
             return main()
 
@@ -178,30 +180,30 @@ class MovingWall(pg.sprite.Sprite):
             screen.blit(self.image, self.rect)
 
 
-class Beam:
-    """
-    こうかとんが放つビームに関するクラス
-    """
+# class Beam:
+#     """
+#     こうかとんが放つビームに関するクラス
+#     """
 
-    def __init__(self, bird:  Bird):
-        """
-        ビーム画像Surfaceを生成する
-        引数 bird：ビームを放つこうかとん（Birdインスタンス）
-        """
-        self.img = pg.image.load(f"fig/beam.png")
-        self.rct = self.img.get_rect()
-        self.rct.centery = bird.rct.centery
-        self.rct.left = bird.rct.right
-        self.vx, self.vy = +5, 0
+#     def __init__(self, bird:  Bird):
+#         """
+#         ビーム画像Surfaceを生成する
+#         引数 bird：ビームを放つこうかとん（Birdインスタンス）
+#         """
+#         self.img = pg.image.load(f"fig/beam.png")
+#         self.rct = self.img.get_rect()
+#         self.rct.centery = bird.rct.centery
+#         self.rct.left = bird.rct.right
+#         self.vx, self.vy = +5, 0
 
-    def update(self, screen: pg.Surface):
-        """
-        ビームを速度ベクトルself.vx, self.vyに基づき移動させる
-        引数 screen：画面Surface
-        """
-        if check_bound(self.rct) == (True, True):
-            self.rct.move_ip(self.vx, self.vy)
-            screen.blit(self.img, self.rct)
+#     def update(self, screen: pg.Surface):
+#         """
+#         ビームを速度ベクトルself.vx, self.vyに基づき移動させる
+#         引数 screen：画面Surface
+#         """
+#         if check_bound(self.rct) == (True, True):
+#             self.rct.move_ip(self.vx, self.vy)
+#             screen.blit(self.img, self.rct)
 
 
 class Bomb:
@@ -329,8 +331,8 @@ class Stage:
 
     # ステージ2の壁とゴールの設定
 
-    def create_stage2(self) -> None:
-        # 動く壁もあるステージ、中級者向け
+    def create_stage3(self) -> None:
+        # 動く壁もあるステージ、上級者向け
         inner_walls = [
             ((50, HEIGHT-150), 250, THINKNESS),
             ((300, HEIGHT-250), THINKNESS, 100),
@@ -347,14 +349,15 @@ class Stage:
             ((190, 50), THINKNESS, 160),
             ((190, 300), THINKNESS, 50),
             ((190, 210), 860, THINKNESS),
-            ((190, 300), 860, THINKNESS),
+            # ((190, 300), 860, THINKNESS),
         ]
         # 動く壁の設定
         moving_walls = [
             (WIDTH//2, WIDTH-100, HEIGHT-150, THINKNESS, 100, 2),
-            (300, WIDTH//2-100, HEIGHT-150, THINKNESS, 100, 0.6),
+            (260, WIDTH//2-100, HEIGHT-150, THINKNESS, 100, 0.6),
             (250, WIDTH-280, HEIGHT-380, THINKNESS, 140, 4),
-            (250, WIDTH-280, 120, THINKNESS, 140, -4),
+            (250, WIDTH//2, 200, THINKNESS, 50, -2),
+            ((WIDTH-100)//2, WIDTH-100, 200, THINKNESS, 50, 2),
         ]
         # 内壁を作成
         for wall in inner_walls:
@@ -368,8 +371,8 @@ class Stage:
         self.goals.add(self.goal)
     # ステージ3の壁とゴールの設定
 
-    def create_stage3(self) -> None:
-        # 高難易度のステージ、上級者向け
+    def create_stage2(self) -> None:
+        # 高難易度のステージ、中級者向け
         inner_walls = [
             ((150, HEIGHT-250), THINKNESS, 200),
             ((50, HEIGHT-320), 170, THINKNESS),
@@ -383,7 +386,7 @@ class Stage:
             ((300, HEIGHT-250), 750, THINKNESS),
         ]
         moving_walls = [
-            (400, WIDTH-100, 200, THINKNESS, 100, 2),
+            (400, WIDTH-100, 230, THINKNESS, 100, 2),
         ]
         # 内壁を作成
         for wall in inner_walls:
@@ -454,7 +457,7 @@ class HEART:
 
 
 def main():
-    pg.display.set_caption("たたかえ！こうかとん")
+    pg.display.set_caption("すすめ！こうかとん、やっぱりもどれ！")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.Surface((WIDTH, HEIGHT))
     bg_img.fill((255, 255, 255))
@@ -468,7 +471,7 @@ def main():
 
     bombs = []
     # ステージクラスのインスタンス生成
-    stage = Stage(1)
+    stage = Stage()
     # score = Score()
     clock = pg.time.Clock()
     tmr = 0
@@ -528,18 +531,23 @@ def main():
                 txt = fonto.render("All Stages Clear!", True, (0, 0, 255))
                 screen.blit(txt, [WIDTH//2-150, HEIGHT//2])
                 pg.display.update()
-                # 5秒間表示させる
-                time.sleep(5)
+                # 3秒間表示させる
+                time.sleep(3)
                 return main()
             else:
                 # それ以外はこのステージをクリアしたことを表示
+                for bomb in bombs:
+                    bombs.remove(bomb)
                 fonto = pg.font.Font(None, 80)
                 txt = fonto.render("Stage Clear!", True, (0, 0, 255))
                 screen.blit(txt, [WIDTH//2-150, HEIGHT//2])
                 bird.rect.center = (110, HEIGHT-90)
-                # 2秒間表示させる
+                # 端末によって次のステージに進むときに前の移動量が残っておりダメージを受けてしまうので無敵化
+                bird.effect_invincible()
+                # 難易度を下げるためにライフを回復
+                heart.life+=1
                 pg.display.update()
-                time.sleep(2)
+                time.sleep(0.9)
 
         if stage.level == 1:
             screen.blit(center_circle, (WIDTH//2 - 20, HEIGHT//2 - 20))
@@ -547,7 +555,7 @@ def main():
                 if len(bombs) < NUM_OF_BOMBS:
                     bombs.append(Bomb((255, 0, 0), 10, (WIDTH//2, HEIGHT//2)))
                 last_bomb_time = tmr
-        elif stage.level == 3:
+        elif stage.level == 2:
             screen.blit(center_circle, (WIDTH//2-20, HEIGHT - 170))
             if tmr - last_bomb_time >= 20:
                 if len(bombs) < NUM_OF_BOMBS:
